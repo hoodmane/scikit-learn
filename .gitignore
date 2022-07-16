@@ -87,3 +87,5 @@ sklearn/utils/_weight_vector.pxd
 sklearn/linear_model/_sag_fast.pyx
 sklearn/metrics/_dist_metrics.pyx
 sklearn/metrics/_dist_metrics.pxd
+
+node_modules

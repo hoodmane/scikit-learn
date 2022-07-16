@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "pyodide": "^0.21.0-alpha.2"
+  }
+}

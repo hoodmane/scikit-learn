@@ -1,0 +1,63 @@
+name: Test Emscripten/Pyodide build
+
+on:
+  push:
+    branches:
+      - main
+      - emscripten-ci
+  pull_request:
+    branches:
+      - main
+      - maintenance/**
+
+jobs:
+  build-wasm-emscripten:
+    # run this for now on all CI for now in case something starts breaking it
+    # if: "success() && (startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main')"
+    # needs: [test, lint]
+    runs-on: ubuntu-latest
+    env:
+      PYODIDE_VERSION: '0.21.0-alpha.3'
+      PYTHON_VERSION: '3.10.2'
+      NODE_VERSION: 18
+      EMSCRIPTEN_VERSION: 3.1.14
+    steps:
+      - name: Checkout numpy
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+          # versioneer.py requires the latest tag to be reachable. Here we
+          # fetch the complete history to get access to the tags.
+          # A shallow clone can work when the following issue is resolved:
+          # https://github.com/actions/checkout/issues/338
+          fetch-depth: 0
+
+      - name: set up python
+        id: setup-python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - uses: mymindstorm/setup-emsdk@v11
+        with:
+          version: ${{ env.EMSCRIPTEN_VERSION }}
+          actions-cache-folder: emsdk-cache
+
+      - name: Install pyodide-build
+        run: pip install pyodide-build==0.21.0a3
+
+      - name: Build
+        run: CFLAGS=-g2 LDFLAGS=-g2 pyodide build
+
+      - name: set up node
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: install Pyodide
+        run: |
+          cd emscripten
+          npm i pyodide@$PYODIDE_VERSION
+      - name: Test
+        run: |
+          node emscripten/emscripten_runner.js . ./numpy
